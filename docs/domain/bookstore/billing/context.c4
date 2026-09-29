@@ -1,0 +1,29 @@
+// 請求コンテキスト（bkst.bill）全体のビュー。概要は context-map.c4 のコンテキストの要素の description にある
+// 書き方は docs/guides/domain-modeling.md に従う。語は各モジュールのディレクトリの .c4 にある
+views {
+  view bkst_bill of bks.bkst.bill {
+    title '書店 / 請求 / 請求（境界付けられたコンテキスト）'
+    description '''
+      - [イベントフロー図](#/view/bkst_bill_event/)
+      - モジュール: [請求管理](#/view/bkst_bill_invm/)
+    '''
+    include bks.bkst.bill.invm with { navigateTo bkst_bill_invm }
+    exclude * -> *
+    // 隣のコンテキスト（外部コンテキストを含む）と、それとの戦略の次元の関係
+    include bks.bkst.bill, bks.** -> bks.bkst.bill, bks.bkst.bill -> bks.**, * -> bks.bkst.bill, bks.bkst.bill -> *
+    exclude bks.bkst.bill.invm.*
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_state_dimension
+  }
+  view bkst_bill_event of bks.bkst.bill {
+    title '書店 / 請求 / イベント'
+    include
+      bks.bkst.bill.** where kind is command or kind is domainEvent or kind is policy or kind is domainService,
+      bks.** -> bks.bkst.bill.**
+    global predicate event_dimension
+    global predicate hide_data_dimension
+    global predicate hide_state_dimension
+    global predicate hide_strategy_dimension
+  }
+}

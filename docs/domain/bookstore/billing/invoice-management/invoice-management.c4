@@ -1,0 +1,129 @@
+// 請求コンテキストの請求管理モジュール。書き方は docs/guides/domain-modeling.md に従う
+model {
+  extend bks.bkst.bill {
+    invm = module '請求管理' {
+      description '''
+        確定した注文ごとに、顧客への請求を発行するモジュール。
+      '''
+      summary 'InvoiceManagement'
+
+      inv = aggregateRoot '請求' {
+        description '''
+          1件の確定した注文について、顧客に代金を求めるもの。1つの注文に請求は1件だけ発行する。
+        '''
+        summary 'Invoice'
+        iid = attribute '請求ID' {
+          description '必須'
+          summary 'invoiceID'
+        }
+        oid = attribute '注文ID' {
+          description '必須'
+          summary 'orderID'
+        }
+        amt = attribute '請求金額' {
+          description '必須。円'
+          summary 'amount'
+          metadata {
+            type 'Integer'
+          }
+        }
+
+        iss = command '請求発行' {
+          description '''
+            確定した注文の代金の請求を発行する。注文コンテキストの[注文確定](#/view/bkst_ordr_ordm_ord_cfmd/)を受けて行う。
+          '''
+          summary 'IssueInvoice'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+          amt = attribute '請求金額' {
+            description '必須。注文確定の合計金額'
+            summary 'amount'
+            metadata {
+              type 'Integer'
+            }
+          }
+        }
+        issd = domainEvent '請求発行済み' {
+          description '''
+            請求が発行された。
+          '''
+          summary 'InvoiceIssued'
+          iid = attribute '請求ID' {
+            description '必須'
+            summary 'invoiceID'
+          }
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+      }
+
+      iid = valueObject '請求ID' {
+        description '''
+          請求を特定する識別子。請求を発行したときに決まる。
+        '''
+        summary 'InvoiceID'
+        metadata {
+          type 'UUID'
+        }
+      }
+      oid = valueObject '注文ID' {
+        description '''
+          注文コンテキストの注文を特定する識別子。値は注文コンテキストが決め、請求はそのまま使う。
+        '''
+        summary 'OrderID'
+        metadata {
+          type 'UUID'
+        }
+      }
+    }
+  }
+
+  // ---- データの次元 ----
+  bks.bkst.bill.invm.inv.iid -[typeOf]-> bks.bkst.bill.invm.iid
+  bks.bkst.bill.invm.inv.oid -[typeOf]-> bks.bkst.bill.invm.oid
+  bks.bkst.bill.invm.inv.iss.oid -[typeOf]-> bks.bkst.bill.invm.oid
+  bks.bkst.bill.invm.inv.issd.iid -[typeOf]-> bks.bkst.bill.invm.iid
+  bks.bkst.bill.invm.inv.issd.oid -[typeOf]-> bks.bkst.bill.invm.oid
+
+  // ---- イベントの次元 ----
+  bks.bkst.bill.invm.inv.iss -[emits]-> bks.bkst.bill.invm.inv.issd
+  // 注文コンテキストのイベントを購読する（戦略の次元では 注文 → 請求 の PL/C）
+  bks.bkst.ordr.ordm.ord.cfmd -[triggers]-> bks.bkst.bill.invm.inv.iss
+}
+
+views {
+  view bkst_bill_invm of bks.bkst.bill.invm {
+    title '書店 / 請求 / 請求管理 / 請求管理（モジュール）'
+    include *
+    global predicate hide_type_references
+  }
+  view bkst_bill_invm_inv of bks.bkst.bill.invm.inv {
+    title '書店 / 請求 / 請求管理 / 請求 / 請求（集約ルート）'
+    include *
+    include bks.bkst.bill.invm.inv -> bks.**, bks.bkst.bill.invm.inv.* -> bks.**, bks.** -> bks.bkst.bill.invm.inv.*
+  }
+  view bkst_bill_invm_inv_iss of bks.bkst.bill.invm.inv.iss {
+    title '書店 / 請求 / 請求管理 / 請求 / 請求発行'
+    include *
+    include bks.bkst.bill.invm.inv.iss -> bks.**, bks.bkst.bill.invm.inv.iss.* -> bks.**
+  }
+  view bkst_bill_invm_inv_issd of bks.bkst.bill.invm.inv.issd {
+    title '書店 / 請求 / 請求管理 / 請求 / 請求発行済み'
+    include *
+    include bks.bkst.bill.invm.inv.issd -> bks.**, bks.bkst.bill.invm.inv.issd.* -> bks.**
+  }
+  view bkst_bill_invm_iid of bks.bkst.bill.invm.iid {
+    title '書店 / 請求 / 請求管理 / 請求ID'
+    include *
+    include bks.** -> bks.bkst.bill.invm.iid
+  }
+  view bkst_bill_invm_oid of bks.bkst.bill.invm.oid {
+    title '書店 / 請求 / 請求管理 / 注文ID'
+    include *
+    include bks.** -> bks.bkst.bill.invm.oid
+  }
+}
