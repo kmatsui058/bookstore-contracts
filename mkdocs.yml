@@ -1,0 +1,56 @@
+site_name: 書店の契約リポジトリ
+site_description: 書店のオンライン注文のドメインモデル・API の定義・仕様をまとめたもの（勉強会用のサンプル）
+
+docs_dir: docs
+
+# LikeC4 のモデル（.c4）と設定、モデルからの生成物、ツールと依存パッケージは docs サイトに載せない
+# （図は LikeC4 のサイトとして c4/ に別に作る。tools/pages/build-docs-site.sh）
+exclude_docs: |
+  *.c4
+  /domain/likec4.config.json
+  /domain/context-map/*.json
+  /domain/context-map/Taskfile.yaml
+  /domain/context-map/tools/
+  /domain/context-map/node_modules/
+  /domain/context-map/build/
+  /domain/**/generated/
+
+# 内部リンク・アンカーの検証。「/foo.md」は docs/foo.md として解決し、公開 URL に変換しつつ実在を確かめる
+validation:
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: relative_to_docs
+    unrecognized_links: info
+
+theme:
+  name: material
+  language: ja
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: ダークモードに切り替える
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: ライトモードに切り替える
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+plugins:
+  - search
