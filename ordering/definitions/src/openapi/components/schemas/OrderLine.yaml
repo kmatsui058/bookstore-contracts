@@ -1,0 +1,15 @@
+type: object
+title: 注文明細
+description: 注文の中の1冊の書籍と、その数量と単価（OrderLine）
+required: [bookID, quantity, unitPrice]
+properties:
+  bookID:
+    $ref: './BookID.yaml'
+  quantity:
+    type: integer
+    description: 数量。1以上
+    minimum: 1
+  unitPrice:
+    type: integer
+    description: 単価。注文したときの商品カタログの価格（円）
+    minimum: 0

@@ -1,0 +1,20 @@
+post:
+  operationId: placeOrder
+  summary: 注文する
+  description: 顧客が書籍を選んで注文を出す。注文は受付済み（PLACED）になり、注文済み（OrderPlaced）が発行される。
+  tags: [order]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/PlaceOrderRequest.yaml'
+  responses:
+    '201':
+      description: 注文を受け付けた
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Order.yaml'
+    '400':
+      $ref: '../responses/BadRequest.yaml'

@@ -1,0 +1,15 @@
+type: object
+title: 注文する
+description: コマンド「注文する」（PlaceOrder）の入力
+required: [customerID, lines, paymentMethod]
+properties:
+  customerID:
+    $ref: './CustomerID.yaml'
+  lines:
+    type: array
+    description: 注文明細一覧。1件以上
+    minItems: 1
+    items:
+      $ref: './OrderLine.yaml'
+  paymentMethod:
+    $ref: './PaymentMethod.yaml'

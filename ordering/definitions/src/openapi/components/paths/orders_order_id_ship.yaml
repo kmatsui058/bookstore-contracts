@@ -1,0 +1,22 @@
+parameters:
+  - $ref: '../parameters/orderID.yaml'
+post:
+  operationId: markOrderShipped
+  summary: 出荷済みにする
+  description: 確定（CONFIRMED）の注文を出荷済み（SHIPPED）にし、注文出荷（OrderShipped）を発行する。
+  tags: [order]
+  responses:
+    '200':
+      description: 変更後の注文
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Order.yaml'
+    '404':
+      $ref: '../responses/NotFound.yaml'
+    '409':
+      description: 注文が確定ではない
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Error.yaml'

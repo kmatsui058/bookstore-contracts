@@ -1,0 +1,4 @@
+type: string
+format: uuid
+title: 注文ID
+description: 注文を特定する識別子

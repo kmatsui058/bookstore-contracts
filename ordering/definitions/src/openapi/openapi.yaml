@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: bookstore-ordering
+  description: |
+    書店の注文 API。語はドメインモデルの注文コンテキスト（bks.bkst.ordr）に従う。
+    列挙型の値はドメインモデルから生成した JSON Schema を取り込んでいる。
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: order
+    description: 注文（集約ルート 注文）
+paths:
+  /orders:
+    $ref: './components/paths/orders.yaml'
+  /orders/{orderID}:
+    $ref: './components/paths/orders_order_id.yaml'
+  /orders/{orderID}/confirm:
+    $ref: './components/paths/orders_order_id_confirm.yaml'
+  /orders/{orderID}/cancel:
+    $ref: './components/paths/orders_order_id_cancel.yaml'
+  /orders/{orderID}/ship:
+    $ref: './components/paths/orders_order_id_ship.yaml'
+components:
+  parameters:
+    orderID:
+      $ref: './components/parameters/orderID.yaml'
+  responses:
+    BadRequest:
+      $ref: './components/responses/BadRequest.yaml'
+    NotFound:
+      $ref: './components/responses/NotFound.yaml'
+  schemas:
+    Order:
+      $ref: './components/schemas/Order.yaml'
+    OrderLine:
+      $ref: './components/schemas/OrderLine.yaml'
+    PlaceOrderRequest:
+      $ref: './components/schemas/PlaceOrderRequest.yaml'
+    OrderID:
+      $ref: './components/schemas/OrderID.yaml'
+    CustomerID:
+      $ref: './components/schemas/CustomerID.yaml'
+    BookID:
+      $ref: './components/schemas/BookID.yaml'
+    OrderStatus:
+      $ref: './components/schemas/OrderStatus.yaml'
+    PaymentMethod:
+      $ref: './components/schemas/PaymentMethod.yaml'
+    Error:
+      $ref: './components/schemas/Error.yaml'

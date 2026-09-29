@@ -1,0 +1,16 @@
+parameters:
+  - $ref: '../parameters/orderID.yaml'
+get:
+  operationId: getOrder
+  summary: 注文を取得する
+  description: 注文ID で注文を1件取得する。
+  tags: [order]
+  responses:
+    '200':
+      description: 注文
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Order.yaml'
+    '404':
+      $ref: '../responses/NotFound.yaml'

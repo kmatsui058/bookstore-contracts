@@ -1,0 +1,25 @@
+version: '3'
+
+# 注文 API（OpenAPI）の定義。書くのは definitions/src/openapi/ の分割したファイルで、
+# definitions/openapi/openapi.yaml はそれを1つにまとめた生成物（サービスリポジトリはこれからコードを生成する）
+tasks:
+  bundle:
+    desc: "分割した OpenAPI の定義を1つのファイルにまとめる"
+    sources:
+      - definitions/src/openapi/**/*
+      # 列挙型はドメインモデルから生成した JSON Schema を $ref で取り込んでいる
+      - ../docs/domain/bookstore/ordering/generated/jsonschema/*.json
+    generates:
+      - definitions/openapi/openapi.yaml
+    cmds:
+      - npx --yes @redocly/cli@2.55.0 bundle definitions/src/openapi/openapi.yaml -o definitions/openapi/openapi.yaml
+
+  lint:
+    desc: "OpenAPI の定義を Spectral で検査する"
+    cmds:
+      - npx --yes @stoplight/spectral-cli@6.16.3 lint definitions/src/openapi/openapi.yaml --ruleset ../.spectral.yaml --fail-severity error
+      # 列挙型の値は、ドメインモデルから生成した JSON Schema を $ref で取り込む。分割した定義の中に直接書かない
+      - |
+        if grep -rn 'enum:' definitions/src/openapi; then
+          echo "enum が直接書かれています。docs/domain の generated/jsonschema/ を \$ref してください" >&2; exit 1
+        fi

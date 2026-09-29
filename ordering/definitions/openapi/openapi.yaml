@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: bookstore-ordering
+  description: |
+    書店の注文 API。語はドメインモデルの注文コンテキスト（bks.bkst.ordr）に従う。
+    列挙型の値はドメインモデルから生成した JSON Schema を取り込んでいる。
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: order
+    description: 注文（集約ルート 注文）
+paths:
+  /orders:
+    post:
+      operationId: placeOrder
+      summary: 注文する
+      description: 顧客が書籍を選んで注文を出す。注文は受付済み（PLACED）になり、注文済み（OrderPlaced）が発行される。
+      tags:
+        - order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+      responses:
+        '201':
+          description: 注文を受け付けた
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /orders/{orderID}:
+    parameters:
+      - $ref: '#/components/parameters/orderID'
+    get:
+      operationId: getOrder
+      summary: 注文を取得する
+      description: 注文ID で注文を1件取得する。
+      tags:
+        - order
+      responses:
+        '200':
+          description: 注文
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /orders/{orderID}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/orderID'
+    post:
+      operationId: confirmOrder
+      summary: 確定する
+      description: 受付済み（PLACED）の注文を確定（CONFIRMED）にし、注文確定（OrderConfirmed）を発行する。
+      tags:
+        - order
+      responses:
+        '200':
+          description: 変更後の注文
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 注文が受付済みではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /orders/{orderID}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/orderID'
+    post:
+      operationId: cancelOrder
+      summary: キャンセルする
+      description: 出荷前（PLACED・CONFIRMED）の注文をキャンセル（CANCELLED）にし、注文キャンセル（OrderCancelled）を発行する。
+      tags:
+        - order
+      responses:
+        '200':
+          description: 変更後の注文
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 注文が出荷済み、またはキャンセル済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /orders/{orderID}/ship:
+    parameters:
+      - $ref: '#/components/parameters/orderID'
+    post:
+      operationId: markOrderShipped
+      summary: 出荷済みにする
+      description: 確定（CONFIRMED）の注文を出荷済み（SHIPPED）にし、注文出荷（OrderShipped）を発行する。
+      tags:
+        - order
+      responses:
+        '200':
+          description: 変更後の注文
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 注文が確定ではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  parameters:
+    orderID:
+      name: orderID
+      in: path
+      required: true
+      description: 注文ID
+      schema:
+        $ref: '#/components/schemas/OrderID'
+  responses:
+    BadRequest:
+      description: リクエストの内容が正しくない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: 注文が見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Order:
+      type: object
+      title: 注文
+      description: 顧客が書籍を買うために出した1回の申し込み（Order）
+      required:
+        - orderID
+        - customerID
+        - lines
+        - paymentMethod
+        - status
+      properties:
+        orderID:
+          $ref: '#/components/schemas/OrderID'
+        customerID:
+          $ref: '#/components/schemas/CustomerID'
+        lines:
+          type: array
+          description: 注文明細一覧。1件以上
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+    OrderLine:
+      type: object
+      title: 注文明細
+      description: 注文の中の1冊の書籍と、その数量と単価（OrderLine）
+      required:
+        - bookID
+        - quantity
+        - unitPrice
+      properties:
+        bookID:
+          $ref: '#/components/schemas/BookID'
+        quantity:
+          type: integer
+          description: 数量。1以上
+          minimum: 1
+        unitPrice:
+          type: integer
+          description: 単価。注文したときの商品カタログの価格（円）
+          minimum: 0
+    PlaceOrderRequest:
+      type: object
+      title: 注文する
+      description: コマンド「注文する」（PlaceOrder）の入力
+      required:
+        - customerID
+        - lines
+        - paymentMethod
+      properties:
+        customerID:
+          $ref: '#/components/schemas/CustomerID'
+        lines:
+          type: array
+          description: 注文明細一覧。1件以上
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+    OrderID:
+      type: string
+      format: uuid
+      title: 注文ID
+      description: 注文を特定する識別子
+    CustomerID:
+      type: string
+      title: 顧客ID
+      description: 注文した顧客を特定する識別子
+    BookID:
+      type: string
+      title: 書籍ID
+      description: 商品カタログコンテキストの書籍を特定する識別子
+    OrderStatus:
+      type: string
+      title: 注文ステータス
+      description: 注文がいまどの状態にあるか。値は注文の状態に対応する。
+      enum:
+        - PLACED
+        - CONFIRMED
+        - SHIPPED
+        - CANCELLED
+      x-enumDescriptions:
+        PLACED: 受付済み
+        CONFIRMED: 確定
+        SHIPPED: 出荷済み
+        CANCELLED: キャンセル
+    PaymentMethod:
+      type: string
+      title: 支払方法
+      description: 顧客が代金を支払う方法。
+      enum:
+        - CREDIT_CARD
+        - BANK_TRANSFER
+        - CASH_ON_DELIVERY
+      x-enumDescriptions:
+        CREDIT_CARD: クレジットカード
+        BANK_TRANSFER: 銀行振込
+        CASH_ON_DELIVERY: 代金引換（配送業者が届けるときに代金を受け取る）
+    Error:
+      type: object
+      title: エラー
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: エラーの種類を表す機械向けの値
+        message:
+          type: string
+          description: 人が読むための説明

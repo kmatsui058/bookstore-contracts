@@ -1,0 +1,22 @@
+parameters:
+  - $ref: '../parameters/orderID.yaml'
+post:
+  operationId: confirmOrder
+  summary: 確定する
+  description: 受付済み（PLACED）の注文を確定（CONFIRMED）にし、注文確定（OrderConfirmed）を発行する。
+  tags: [order]
+  responses:
+    '200':
+      description: 変更後の注文
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Order.yaml'
+    '404':
+      $ref: '../responses/NotFound.yaml'
+    '409':
+      description: 注文が受付済みではない
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Error.yaml'

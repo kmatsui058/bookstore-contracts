@@ -1,0 +1,19 @@
+type: object
+title: 注文
+description: 顧客が書籍を買うために出した1回の申し込み（Order）
+required: [orderID, customerID, lines, paymentMethod, status]
+properties:
+  orderID:
+    $ref: './OrderID.yaml'
+  customerID:
+    $ref: './CustomerID.yaml'
+  lines:
+    type: array
+    description: 注文明細一覧。1件以上
+    minItems: 1
+    items:
+      $ref: './OrderLine.yaml'
+  paymentMethod:
+    $ref: './PaymentMethod.yaml'
+  status:
+    $ref: './OrderStatus.yaml'
