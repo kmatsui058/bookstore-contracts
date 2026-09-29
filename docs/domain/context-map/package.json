@@ -1,0 +1,12 @@
+{
+  "name": "context-map",
+  "private": true,
+  "description": "ドメインモデル（LikeC4）",
+  "scripts": {
+    "start": "likec4 start --use-hash-history ..",
+    "validate": "likec4 validate .."
+  },
+  "devDependencies": {
+    "likec4": "1.46.0"
+  }
+}

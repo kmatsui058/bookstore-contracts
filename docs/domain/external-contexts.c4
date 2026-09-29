@@ -1,0 +1,15 @@
+// コンテキストマップ：外部コンテキスト（書店の業務の外にあるもの）
+model {
+  pgw = externalContext '決済代行' {
+    description '''
+      クレジットカードなどの決済を代行する外部のサービス。
+    '''
+    summary 'PaymentGateway'
+  }
+  crr = externalContext '配送業者' {
+    description '''
+      書籍を顧客に届ける外部の配送業者。
+    '''
+    summary 'Carrier'
+  }
+}

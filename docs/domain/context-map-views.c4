@@ -1,0 +1,29 @@
+// コンテキストマップのビュー。戦略の次元だけを描く（ほかの次元の関係が親の箱どうしの線にまとめて描かれないようにする）
+views {
+
+  view index {
+    title 'コンテキストマップ'
+    description '''
+      書店の業務のドメインモデルの入口。業務ドメインとその中の境界付けられたコンテキスト、外部コンテキストの関係（戦略の次元）を描く。
+
+      - [サガ / 注文から請求まで](#/view/saga_ordinv/)
+    '''
+    include
+      *,
+      bks.*,
+      bks.bkst.*
+    global predicate strategy_dimension
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_state_dimension
+  }
+
+  view bkst_strategy of bks.bkst {
+    title '書店 / 戦略'
+    include *
+    global predicate strategy_dimension
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_state_dimension
+  }
+}

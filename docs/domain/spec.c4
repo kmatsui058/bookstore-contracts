@@ -1,0 +1,88 @@
+// 要素と関係の種類の定義（正本）。書き方は docs/guides/domain-modeling.md に従う
+specification {
+  // ---- コンテキストマップ ----
+  element enterprise {
+    notation '企業の業務'
+    style { shape rectangle; color muted; opacity 5% }
+  }
+  element domain {
+    notation '業務ドメイン'
+    style { shape rectangle; color slate; opacity 8% }
+  }
+  element context {
+    notation '境界付けられたコンテキスト'
+    style { shape rectangle; color primary }
+  }
+  element externalContext {
+    notation '外部コンテキスト'
+    style { shape rectangle; color gray; border dashed }
+  }
+
+  // ---- コンテキストの内側（ユビキタス言語）----
+  element module {
+    notation 'モジュール'
+    style { color secondary; opacity 10% }
+  }
+  element aggregateRoot {
+    notation '集約ルート'
+    style { color primary; size xsmall }
+  }
+  element entity {
+    notation 'エンティティ'
+    style { color blue; size xsmall }
+  }
+  element valueObject {
+    notation '値オブジェクト'
+    style { color green; size xsmall }
+  }
+  element enum {
+    notation '列挙型'
+    style { color slate; size xsmall }
+  }
+  element enumValue {
+    notation '列挙値'
+    style { color slate; size xsmall; opacity 40% }
+  }
+  element policy {
+    notation 'ポリシー'
+    style { color indigo; size xsmall }
+  }
+  element domainService {
+    notation 'ドメインサービス'
+    style { color indigo; size xsmall; border dashed }
+  }
+  element command {
+    notation 'コマンド'
+    style { color sky; size xsmall }
+  }
+  element domainEvent {
+    notation 'ドメインイベント'
+    style { color amber; size xsmall }
+  }
+  element attribute {
+    notation '属性'
+    style { color muted; size xsmall }
+  }
+  element state {
+    notation '状態'
+    style { color red; size xsmall }
+  }
+
+  // ---- データの次元 ----
+  relationship typeOf { notation '属性 → 型の語' }
+  relationship listOf { notation '属性 → 一覧の中身の語' }
+  relationship inherits { notation '派生の語 → 基底の語' }
+  relationship refersTo { notation '語 → 読み取って頼る語（参照）'; line dotted }
+  // ---- イベントの次元 ----
+  relationship emits { notation 'コマンド → 発行するイベント' }
+  relationship triggers { notation 'イベント → 起きる処理（購読・ポリシー）'; line dashed }
+  relationship executes { notation 'ドメインサービス → 実行するコマンド'; line dotted }
+  relationship calls { notation 'コマンド・ドメインサービス → 呼び出す処理（委譲）' }
+  // ---- 状態の次元 ----
+  relationship transitionsTo { notation '状態 → 遷移先の状態（ラベルに契機）' }
+  // ---- 戦略の次元（両端のパターンは metadata の upstreamPattern・downstreamPattern に OHS・ACL・PL・C を書く）----
+  relationship customerSupplier { notation 'Supplier（上流）→ Customer（下流）'; color amber }
+  relationship upstreamDownstream { notation 'Upstream → Downstream（データの流れ）'; color green }
+  relationship sharedKernel { notation 'Shared Kernel'; color indigo; line solid }
+  relationship separateWays { notation 'Separate way'; color gray; line dotted }
+}

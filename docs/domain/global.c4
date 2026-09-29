@@ -1,0 +1,31 @@
+// 次元（関係の種類の分類）の定義（正本）
+global {
+  predicateGroup data_dimension {
+    include * -> * where kind is typeOf or kind is listOf or kind is inherits or kind is refersTo
+  }
+  predicateGroup hide_data_dimension {
+    exclude * -> * where kind is typeOf or kind is listOf or kind is inherits or kind is refersTo
+  }
+  // 属性の型（typeOf・listOf）の線。語ごとのビュー以外では隠す
+  predicateGroup hide_type_references {
+    exclude * -> * where kind is typeOf or kind is listOf
+  }
+  predicateGroup event_dimension {
+    include * -> * where kind is emits or kind is triggers or kind is executes or kind is calls
+  }
+  predicateGroup hide_event_dimension {
+    exclude * -> * where kind is emits or kind is triggers or kind is executes or kind is calls
+  }
+  predicateGroup state_dimension {
+    include * -> * where kind is transitionsTo
+  }
+  predicateGroup hide_state_dimension {
+    exclude * -> * where kind is transitionsTo
+  }
+  predicateGroup strategy_dimension {
+    include * -> * where kind is customerSupplier or kind is upstreamDownstream or kind is sharedKernel or kind is separateWays
+  }
+  predicateGroup hide_strategy_dimension {
+    exclude * -> * where kind is customerSupplier or kind is upstreamDownstream or kind is sharedKernel or kind is separateWays
+  }
+}
