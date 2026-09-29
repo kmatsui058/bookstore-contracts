@@ -1,0 +1,32 @@
+// 注文コンテキスト（bkst.ordr）全体のビュー。概要は context-map.c4 のコンテキストの要素の description にある
+// 書き方は docs/guides/domain-modeling.md に従う。語は各モジュールのディレクトリの .c4 にある
+views {
+  view bkst_ordr of bks.bkst.ordr {
+    title '書店 / 注文 / 注文（境界付けられたコンテキスト）'
+    description '''
+      - [イベントフロー図](#/view/bkst_ordr_event/)
+      - [ステートマシン図](#/view/bkst_ordr_ordm_ord_state/)
+      - モジュール: [注文管理](#/view/bkst_ordr_ordm/)・[共通語彙](#/view/bkst_ordr_shr/)
+    '''
+    include bks.bkst.ordr.ordm with { navigateTo bkst_ordr_ordm }
+    include bks.bkst.ordr.shr with { navigateTo bkst_ordr_shr }
+    exclude * -> *
+    // 隣のコンテキスト（外部コンテキストを含む）と、それとの戦略の次元の関係
+    include bks.bkst.ordr, bks.** -> bks.bkst.ordr, bks.bkst.ordr -> bks.**, * -> bks.bkst.ordr, bks.bkst.ordr -> *
+    // 中の語どうしの関係から描かれる箱は出さない（モジュールの中身は各モジュールのビューで見る）
+    exclude bks.bkst.ordr.ordm.*, bks.bkst.ordr.shr.*
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_state_dimension
+  }
+  view bkst_ordr_event of bks.bkst.ordr {
+    title '書店 / 注文 / イベント'
+    include
+      bks.bkst.ordr.** where kind is command or kind is domainEvent or kind is policy or kind is domainService,
+      bks.bkst.ordr.** -> bks.**
+    global predicate event_dimension
+    global predicate hide_data_dimension
+    global predicate hide_state_dimension
+    global predicate hide_strategy_dimension
+  }
+}

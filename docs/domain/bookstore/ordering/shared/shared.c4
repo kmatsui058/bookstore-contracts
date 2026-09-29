@@ -1,0 +1,47 @@
+// 注文コンテキストの共通語彙。書き方は docs/guides/domain-modeling.md に従う
+model {
+  extend bks.bkst.ordr {
+    shr = module '共通語彙' {
+      description '''
+        注文コンテキストの中で、モジュールをまたいで使う語。
+      '''
+      summary 'Shared'
+      bid = valueObject '書籍ID' {
+        description '''
+          商品カタログコンテキストの書籍を特定する識別子。値は商品カタログが決め、注文はそのまま使う。
+        '''
+        summary 'BookID'
+        metadata {
+          type 'String'
+        }
+      }
+      cid = valueObject '顧客ID' {
+        description '''
+          注文した顧客を特定する識別子。
+        '''
+        summary 'CustomerID'
+        metadata {
+          type 'String'
+        }
+      }
+    }
+  }
+}
+
+views {
+  view bkst_ordr_shr of bks.bkst.ordr.shr {
+    title '書店 / 注文 / 共通語彙 / 共通語彙（モジュール）'
+    include *
+    global predicate hide_type_references
+  }
+  view bkst_ordr_shr_bid of bks.bkst.ordr.shr.bid {
+    title '書店 / 注文 / 共通語彙 / 書籍ID'
+    include *
+    include bks.** -> bks.bkst.ordr.shr.bid
+  }
+  view bkst_ordr_shr_cid of bks.bkst.ordr.shr.cid {
+    title '書店 / 注文 / 共通語彙 / 顧客ID'
+    include *
+    include bks.** -> bks.bkst.ordr.shr.cid
+  }
+}
