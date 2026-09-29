@@ -1,0 +1,33 @@
+version: '3'
+
+# モデルのルート（likec4.config.json を置いている）
+vars:
+  ROOT: ..
+
+tasks:
+  validate:
+    desc: "モデルの構文と参照を検査する"
+    cmds:
+      - npx likec4 validate {{.ROOT}}
+
+  generate:enums:
+    desc: "各コンテキストの列挙型の JSON Schema を、そのコンテキストのディレクトリの generated/jsonschema/ に生成する"
+    cmds:
+      - mkdir -p build
+      - npx likec4 export json -o build/model.json {{.ROOT}}
+      # contexts.md の表から「FQN とドキュメントのディレクトリ」の組を取り出す
+      - |
+        awk -F'|' 'NR>2 && $7 ~ /docs\/domain\// {gsub(/ /,"",$6); gsub(/ /,"",$7); print $6" "$7}' contexts.md | while read fqn dir; do
+          dir="{{.ROOT}}/${dir#docs/domain/}generated/jsonschema"
+          jq --arg prefix "$fqn" -f tools/enum-jsonschema.jq build/model.json > build/enums.json
+          if jq -e 'has("error")' build/enums.json >/dev/null; then
+            echo "英名（summary）のない列挙型があります: $(jq -c .error build/enums.json)" >&2; exit 1
+          fi
+          rm -rf "$dir"
+          if [ "$(jq 'length' build/enums.json)" -gt 0 ]; then
+            mkdir -p "$dir"
+            for name in $(jq -r 'keys[]' build/enums.json); do
+              jq --arg name "$name" '.[$name]' build/enums.json > "$dir/$name.json"
+            done
+          fi
+        done
