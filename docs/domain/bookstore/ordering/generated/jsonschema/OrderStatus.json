@@ -1,0 +1,17 @@
+{
+  "type": "string",
+  "title": "注文ステータス",
+  "description": "注文がいまどの状態にあるか。値は注文の状態に対応する。",
+  "enum": [
+    "PLACED",
+    "CONFIRMED",
+    "SHIPPED",
+    "CANCELLED"
+  ],
+  "x-enumDescriptions": {
+    "PLACED": "受付済み",
+    "CONFIRMED": "確定",
+    "SHIPPED": "出荷済み",
+    "CANCELLED": "キャンセル"
+  }
+}

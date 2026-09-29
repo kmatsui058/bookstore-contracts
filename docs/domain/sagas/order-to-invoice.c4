@@ -1,0 +1,22 @@
+// 長期サーガ：注文から請求まで（注文を受け付けてから、請求が発行されるまで）
+// 各ステップは、モデルにある関係（emits・triggers）をたどる。モデルにない線をここで描かない
+views {
+  dynamic view saga_ordinv {
+    title 'サガ / 注文から請求まで'
+    description '''
+      顧客が注文してから、書店が注文を確定し、請求コンテキストが請求を発行するまで。
+
+      注文済みから確定するまでの間は、書店の人の判断で進む（イベントからコマンドへの自動の線はない）。
+      確定したあとは、請求コンテキストが[注文確定](#/view/bkst_ordr_ordm_ord_cfmd/)を購読して請求を発行する。
+    '''
+    // 枠として描きたいコンテキスト・モジュール・集約
+    include
+      bks.bkst.ordr, bks.bkst.ordr.ordm, bks.bkst.ordr.ordm.ord,
+      bks.bkst.bill, bks.bkst.bill.invm, bks.bkst.bill.invm.inv
+
+    bks.bkst.ordr.ordm.ord.plc -> bks.bkst.ordr.ordm.ord.plcd '顧客が注文する'
+    bks.bkst.ordr.ordm.ord.cfm -> bks.bkst.ordr.ordm.ord.cfmd '書店が注文を確定する'
+    bks.bkst.ordr.ordm.ord.cfmd -> bks.bkst.bill.invm.inv.iss '注文確定を購読する'
+    bks.bkst.bill.invm.inv.iss -> bks.bkst.bill.invm.inv.issd '請求を発行する'
+  }
+}

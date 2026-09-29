@@ -1,0 +1,339 @@
+// 注文コンテキストの注文管理モジュール。書き方は docs/guides/domain-modeling.md に従う
+model {
+  extend bks.bkst.ordr {
+    ordm = module '注文管理' {
+      description '''
+        顧客の注文を受け付け、確定・出荷・キャンセルまでの状態を管理するモジュール。
+
+        モジュールをまたいで使う語は[共通語彙](#/view/bkst_ordr_shr/)にある。
+      '''
+      summary 'OrderManagement'
+
+      ord = aggregateRoot '注文' {
+        description '''
+          顧客が書籍を買うために出した1回の申し込み。
+
+          - [ステートマシン図](#/view/bkst_ordr_ordm_ord_state/)
+          - **ルール**:
+              - 注文明細は1件以上ある
+              - キャンセルできるのは出荷前（受付済み・確定）だけ。出荷済みの注文はキャンセルできない
+        '''
+        summary 'Order'
+
+        oid = attribute '注文ID' {
+          description '必須'
+          summary 'orderID'
+        }
+        cid = attribute '顧客ID' {
+          description '必須'
+          summary 'customerID'
+        }
+        lns = attribute '注文明細一覧' {
+          description '必須。1件以上'
+          summary 'lines'
+        }
+        pym = attribute '支払方法' {
+          description '必須'
+          summary 'paymentMethod'
+        }
+        sts = attribute '注文ステータス' {
+          description '必須'
+          summary 'status'
+        }
+
+        // ---- コマンド ----
+        plc = command '注文する' {
+          description '''
+            顧客が書籍を選んで注文を出す。注文は受付済みになる。
+          '''
+          summary 'PlaceOrder'
+          cid = attribute '顧客ID' {
+            description '必須'
+            summary 'customerID'
+          }
+          lns = attribute '注文明細一覧' {
+            description '必須。1件以上'
+            summary 'lines'
+          }
+          pym = attribute '支払方法' {
+            description '必須'
+            summary 'paymentMethod'
+          }
+        }
+        cfm = command '確定する' {
+          description '''
+            書店が、受付済みの注文を引き受けると決める。
+          '''
+          summary 'ConfirmOrder'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+        cnc = command 'キャンセルする' {
+          description '''
+            出荷前の注文を取り消す。出荷済みの注文には使えない。
+          '''
+          summary 'CancelOrder'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+        shp = command '出荷済みにする' {
+          description '''
+            確定した注文の書籍を配送業者に渡したことを記録する。
+          '''
+          summary 'MarkOrderShipped'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+
+        // ---- イベント ----
+        plcd = domainEvent '注文済み' {
+          description '''
+            注文が受け付けられた。
+          '''
+          summary 'OrderPlaced'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+        cfmd = domainEvent '注文確定' {
+          description '''
+            注文が確定した。請求コンテキストは、このイベントを受けて請求を発行する。
+          '''
+          summary 'OrderConfirmed'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+          cid = attribute '顧客ID' {
+            description '必須'
+            summary 'customerID'
+          }
+          pym = attribute '支払方法' {
+            description '必須'
+            summary 'paymentMethod'
+          }
+          tam = attribute '合計金額' {
+            description '必須。注文明細の単価 × 数量の合計（円）'
+            summary 'totalAmount'
+            metadata {
+              type 'Integer'
+            }
+          }
+        }
+        cncd = domainEvent '注文キャンセル' {
+          description '''
+            注文がキャンセルされた。
+          '''
+          summary 'OrderCancelled'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+        shpd = domainEvent '注文出荷' {
+          description '''
+            注文の書籍が配送業者に渡された。
+          '''
+          summary 'OrderShipped'
+          oid = attribute '注文ID' {
+            description '必須'
+            summary 'orderID'
+          }
+        }
+
+        // ---- 状態（値は注文ステータス）----
+        recv = state '受付済み' {
+          description '値: `PLACED`（[注文ステータス](#/view/bkst_ordr_ordm_ost/)）'
+        }
+        conf = state '確定' {
+          description '値: `CONFIRMED`（[注文ステータス](#/view/bkst_ordr_ordm_ost/)）'
+        }
+        ship = state '出荷済み' {
+          description '値: `SHIPPED`（[注文ステータス](#/view/bkst_ordr_ordm_ost/)）'
+        }
+        canc = state 'キャンセル' {
+          description '値: `CANCELLED`（[注文ステータス](#/view/bkst_ordr_ordm_ost/)）'
+        }
+
+        recv -[transitionsTo]-> conf '確定する'
+        conf -[transitionsTo]-> ship '出荷済みにする'
+        recv -[transitionsTo]-> canc 'キャンセルする'
+        conf -[transitionsTo]-> canc 'キャンセルする'
+      }
+
+      oid = valueObject '注文ID' {
+        description '''
+          注文を特定する識別子。注文を受け付けたときに決まる。
+        '''
+        summary 'OrderID'
+        metadata {
+          type 'UUID'
+        }
+      }
+
+      oln = valueObject '注文明細' {
+        description '''
+          注文の中の1冊の書籍と、その数量と単価。
+        '''
+        summary 'OrderLine'
+        bid = attribute '書籍ID' {
+          description '必須'
+          summary 'bookID'
+        }
+        qty = attribute '数量' {
+          description '必須。1以上'
+          summary 'quantity'
+          metadata {
+            type 'Integer'
+          }
+        }
+        upr = attribute '単価' {
+          description '必須。注文したときの商品カタログの価格（円）'
+          summary 'unitPrice'
+          metadata {
+            type 'Integer'
+          }
+        }
+      }
+
+      ost = enum '注文ステータス' {
+        description '''
+          注文がいまどの状態にあるか。値は[注文](#/view/bkst_ordr_ordm_ord_state/)の状態に対応する。
+        '''
+        summary 'OrderStatus'
+        PLACED = enumValue '受付済み'
+        CONFIRMED = enumValue '確定'
+        SHIPPED = enumValue '出荷済み'
+        CANCELLED = enumValue 'キャンセル'
+      }
+
+      pmt = enum '支払方法' {
+        description '''
+          顧客が代金を支払う方法。
+        '''
+        summary 'PaymentMethod'
+        CREDIT_CARD = enumValue 'クレジットカード'
+        BANK_TRANSFER = enumValue '銀行振込'
+        CASH_ON_DELIVERY = enumValue '代金引換' {
+          description '配送業者が届けるときに代金を受け取る'
+        }
+      }
+    }
+  }
+
+  // ---- データの次元 ----
+  bks.bkst.ordr.ordm.ord.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.cid -[typeOf]-> bks.bkst.ordr.shr.cid
+  bks.bkst.ordr.ordm.ord.lns -[listOf]-> bks.bkst.ordr.ordm.oln
+  bks.bkst.ordr.ordm.ord.pym -[typeOf]-> bks.bkst.ordr.ordm.pmt
+  bks.bkst.ordr.ordm.ord.sts -[typeOf]-> bks.bkst.ordr.ordm.ost
+  bks.bkst.ordr.ordm.ord.plc.cid -[typeOf]-> bks.bkst.ordr.shr.cid
+  bks.bkst.ordr.ordm.ord.plc.lns -[listOf]-> bks.bkst.ordr.ordm.oln
+  bks.bkst.ordr.ordm.ord.plc.pym -[typeOf]-> bks.bkst.ordr.ordm.pmt
+  bks.bkst.ordr.ordm.ord.cfm.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.cnc.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.shp.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.plcd.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.cfmd.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.cfmd.cid -[typeOf]-> bks.bkst.ordr.shr.cid
+  bks.bkst.ordr.ordm.ord.cfmd.pym -[typeOf]-> bks.bkst.ordr.ordm.pmt
+  bks.bkst.ordr.ordm.ord.cncd.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.ord.shpd.oid -[typeOf]-> bks.bkst.ordr.ordm.oid
+  bks.bkst.ordr.ordm.oln.bid -[typeOf]-> bks.bkst.ordr.shr.bid
+
+  // ---- イベントの次元 ----
+  bks.bkst.ordr.ordm.ord.plc -[emits]-> bks.bkst.ordr.ordm.ord.plcd
+  bks.bkst.ordr.ordm.ord.cfm -[emits]-> bks.bkst.ordr.ordm.ord.cfmd
+  bks.bkst.ordr.ordm.ord.cnc -[emits]-> bks.bkst.ordr.ordm.ord.cncd
+  bks.bkst.ordr.ordm.ord.shp -[emits]-> bks.bkst.ordr.ordm.ord.shpd
+}
+
+views {
+  view bkst_ordr_ordm of bks.bkst.ordr.ordm {
+    title '書店 / 注文 / 注文管理 / 注文管理（モジュール）'
+    include *
+    global predicate hide_type_references
+  }
+
+  view bkst_ordr_ordm_ord of bks.bkst.ordr.ordm.ord {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文（集約ルート）'
+    include *
+    include bks.bkst.ordr.ordm.ord -> bks.**, bks.bkst.ordr.ordm.ord.* -> bks.**
+    // 状態はステートマシン図で見る
+    exclude bks.bkst.ordr.ordm.ord.* where kind is state
+  }
+  view bkst_ordr_ordm_ord_state of bks.bkst.ordr.ordm.ord {
+    title '書店 / 注文 / 注文管理 / 注文 / 状態'
+    include
+      bks.bkst.ordr.ordm.ord.* where kind is state
+    global predicate state_dimension
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_strategy_dimension
+  }
+  view bkst_ordr_ordm_ord_plc of bks.bkst.ordr.ordm.ord.plc {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文する'
+    include *
+    include bks.bkst.ordr.ordm.ord.plc -> bks.**, bks.bkst.ordr.ordm.ord.plc.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_cfm of bks.bkst.ordr.ordm.ord.cfm {
+    title '書店 / 注文 / 注文管理 / 注文 / 確定する'
+    include *
+    include bks.bkst.ordr.ordm.ord.cfm -> bks.**, bks.bkst.ordr.ordm.ord.cfm.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_cnc of bks.bkst.ordr.ordm.ord.cnc {
+    title '書店 / 注文 / 注文管理 / 注文 / キャンセルする'
+    include *
+    include bks.bkst.ordr.ordm.ord.cnc -> bks.**, bks.bkst.ordr.ordm.ord.cnc.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_shp of bks.bkst.ordr.ordm.ord.shp {
+    title '書店 / 注文 / 注文管理 / 注文 / 出荷済みにする'
+    include *
+    include bks.bkst.ordr.ordm.ord.shp -> bks.**, bks.bkst.ordr.ordm.ord.shp.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_plcd of bks.bkst.ordr.ordm.ord.plcd {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文済み'
+    include *
+    include bks.bkst.ordr.ordm.ord.plcd -> bks.**, bks.bkst.ordr.ordm.ord.plcd.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_cfmd of bks.bkst.ordr.ordm.ord.cfmd {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文確定'
+    include *
+    include bks.bkst.ordr.ordm.ord.cfmd -> bks.**, bks.bkst.ordr.ordm.ord.cfmd.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_cncd of bks.bkst.ordr.ordm.ord.cncd {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文キャンセル'
+    include *
+    include bks.bkst.ordr.ordm.ord.cncd -> bks.**, bks.bkst.ordr.ordm.ord.cncd.* -> bks.**
+  }
+  view bkst_ordr_ordm_ord_shpd of bks.bkst.ordr.ordm.ord.shpd {
+    title '書店 / 注文 / 注文管理 / 注文 / 注文出荷'
+    include *
+    include bks.bkst.ordr.ordm.ord.shpd -> bks.**, bks.bkst.ordr.ordm.ord.shpd.* -> bks.**
+  }
+  view bkst_ordr_ordm_oid of bks.bkst.ordr.ordm.oid {
+    title '書店 / 注文 / 注文管理 / 注文ID'
+    include *
+    include bks.** -> bks.bkst.ordr.ordm.oid
+  }
+  view bkst_ordr_ordm_oln of bks.bkst.ordr.ordm.oln {
+    title '書店 / 注文 / 注文管理 / 注文明細'
+    include *
+    include bks.bkst.ordr.ordm.oln -> bks.**, bks.bkst.ordr.ordm.oln.* -> bks.**
+  }
+  view bkst_ordr_ordm_ost of bks.bkst.ordr.ordm.ost {
+    title '書店 / 注文 / 注文管理 / 注文ステータス'
+    include *
+  }
+  view bkst_ordr_ordm_pmt of bks.bkst.ordr.ordm.pmt {
+    title '書店 / 注文 / 注文管理 / 支払方法'
+    include *
+  }
+}

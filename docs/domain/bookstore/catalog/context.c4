@@ -1,0 +1,18 @@
+// 商品カタログコンテキスト（bkst.ctlg）全体のビュー。概要は context-map.c4 のコンテキストの要素の description にある
+// 書き方は docs/guides/domain-modeling.md に従う。語は各モジュールのディレクトリの .c4 にある
+views {
+  view bkst_ctlg of bks.bkst.ctlg {
+    title '書店 / 商品カタログ / 商品カタログ（境界付けられたコンテキスト）'
+    description '''
+      - モジュール: [書籍管理](#/view/bkst_ctlg_bkm/)
+    '''
+    include bks.bkst.ctlg.bkm with { navigateTo bkst_ctlg_bkm }
+    exclude * -> *
+    // 隣のコンテキスト（外部コンテキストを含む）と、それとの戦略の次元の関係
+    include bks.bkst.ctlg, bks.** -> bks.bkst.ctlg, bks.bkst.ctlg -> bks.**, * -> bks.bkst.ctlg, bks.bkst.ctlg -> *
+    exclude bks.bkst.ctlg.bkm.*
+    global predicate hide_data_dimension
+    global predicate hide_event_dimension
+    global predicate hide_state_dimension
+  }
+}

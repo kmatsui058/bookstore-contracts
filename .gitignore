@@ -1,0 +1,5 @@
+node_modules/
+# LikeC4 の書き出し（モデルの JSON・図のサイト）は作業用。生成物のうちコミットするのは列挙型の JSON Schema だけ
+docs/domain/context-map/build/
+# ドキュメントサイトのビルド結果
+site/

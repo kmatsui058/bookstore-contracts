@@ -1,0 +1,31 @@
+// コンテキストマップ：戦略の次元の関係
+// 向きは上流 → 下流（customerSupplier は Supplier → Customer）。両端のパターンは metadata に書く
+model {
+
+  // 注文は、商品カタログが公開する書籍と価格の形をそのまま受け取る
+  bks.bkst.ctlg -[customerSupplier]-> bks.bkst.ordr '書籍と価格' {
+    metadata {
+      upstreamPattern 'OHS'
+      downstreamPattern 'C'
+    }
+  }
+
+  // 請求は、注文が公開するイベント（公表された言語）を購読する
+  bks.bkst.ordr -[upstreamDownstream]-> bks.bkst.bill '注文確定' {
+    metadata {
+      upstreamPattern 'PL'
+      downstreamPattern 'C'
+    }
+  }
+
+  // 決済代行の API の形は、請求の中に持ち込まず腐敗防止層で変換する
+  pgw -[upstreamDownstream]-> bks.bkst.bill '決済' {
+    metadata {
+      upstreamPattern 'OHS'
+      downstreamPattern 'ACL'
+    }
+  }
+
+  // 配送業者とはシステムで統合しない。出荷の手配は人が配送業者の窓口で行い、その結果を注文に記録する
+  bks.bkst.ordr -[separateWays]-> crr '出荷の手配'
+}

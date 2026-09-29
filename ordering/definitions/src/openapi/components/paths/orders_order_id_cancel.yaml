@@ -1,0 +1,22 @@
+parameters:
+  - $ref: '../parameters/orderID.yaml'
+post:
+  operationId: cancelOrder
+  summary: キャンセルする
+  description: 出荷前（PLACED・CONFIRMED）の注文をキャンセル（CANCELLED）にし、注文キャンセル（OrderCancelled）を発行する。
+  tags: [order]
+  responses:
+    '200':
+      description: 変更後の注文
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Order.yaml'
+    '404':
+      $ref: '../responses/NotFound.yaml'
+    '409':
+      description: 注文が出荷済み、またはキャンセル済み
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Error.yaml'

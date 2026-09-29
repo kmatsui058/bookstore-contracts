@@ -1,0 +1,67 @@
+// 商品カタログコンテキストの書籍管理モジュール。書き方は docs/guides/domain-modeling.md に従う
+model {
+  extend bks.bkst.ctlg {
+    bkm = module '書籍管理' {
+      description '''
+        書店が売る書籍と、その価格を管理するモジュール。
+      '''
+      summary 'BookManagement'
+
+      bok = aggregateRoot '書籍' {
+        description '''
+          書店が売る1つの商品としての書籍。
+        '''
+        summary 'Book'
+        bid = attribute '書籍ID' {
+          description '必須'
+          summary 'bookID'
+        }
+        ttl = attribute '書名' {
+          description '必須'
+          summary 'title'
+          metadata {
+            type 'String'
+          }
+        }
+        prc = attribute '価格' {
+          description '必須。税込みの円。0より大きい'
+          summary 'price'
+          metadata {
+            type 'Integer'
+          }
+        }
+      }
+
+      bid = valueObject '書籍ID' {
+        description '''
+          書籍を特定する識別子。書籍を登録したときに決まる。
+        '''
+        summary 'BookID'
+        metadata {
+          type 'String'
+        }
+      }
+    }
+  }
+
+  // ---- データの次元 ----
+  bks.bkst.ctlg.bkm.bok.bid -[typeOf]-> bks.bkst.ctlg.bkm.bid
+}
+
+views {
+  view bkst_ctlg_bkm of bks.bkst.ctlg.bkm {
+    title '書店 / 商品カタログ / 書籍管理 / 書籍管理（モジュール）'
+    include *
+    global predicate hide_type_references
+  }
+  view bkst_ctlg_bkm_bok of bks.bkst.ctlg.bkm.bok {
+    title '書店 / 商品カタログ / 書籍管理 / 書籍'
+    include *
+    include bks.bkst.ctlg.bkm.bok -> bks.**, bks.bkst.ctlg.bkm.bok.* -> bks.**
+  }
+  view bkst_ctlg_bkm_bid of bks.bkst.ctlg.bkm.bid {
+    title '書店 / 商品カタログ / 書籍管理 / 書籍ID'
+    include *
+    include bks.** -> bks.bkst.ctlg.bkm.bid
+  }
+}

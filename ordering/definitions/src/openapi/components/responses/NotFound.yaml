@@ -1,0 +1,5 @@
+description: 注文が見つからない
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'

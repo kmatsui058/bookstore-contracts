@@ -1,0 +1,6 @@
+name: orderID
+in: path
+required: true
+description: 注文ID
+schema:
+  $ref: '../schemas/OrderID.yaml'

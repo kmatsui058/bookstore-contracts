@@ -1,0 +1,15 @@
+{
+  "type": "string",
+  "title": "支払方法",
+  "description": "顧客が代金を支払う方法。",
+  "enum": [
+    "CREDIT_CARD",
+    "BANK_TRANSFER",
+    "CASH_ON_DELIVERY"
+  ],
+  "x-enumDescriptions": {
+    "CREDIT_CARD": "クレジットカード",
+    "BANK_TRANSFER": "銀行振込",
+    "CASH_ON_DELIVERY": "代金引換（配送業者が届けるときに代金を受け取る）"
+  }
+}

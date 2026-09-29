@@ -1,0 +1,45 @@
+name: Lint OpenAPI
+
+# API の定義（*/definitions/src/openapi）の検査。
+# まとめたファイル（definitions/openapi/openapi.yaml）は生成物なので、まとめ直して差分が出たら失敗にする。
+on:
+  pull_request:
+    paths:
+      - '*/definitions/**'
+      - '*/Taskfile.yaml'
+      - 'docs/domain/**/generated/**'
+      - '.spectral.yaml'
+      - '.github/workflows/lint-openapi.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '*/definitions/**'
+      - '*/Taskfile.yaml'
+      - 'docs/domain/**/generated/**'
+      - '.spectral.yaml'
+      - '.github/workflows/lint-openapi.yaml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ordering
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: go-task/setup-task@v1
+
+      - name: Lint ordering OpenAPI
+        run: task lint
+
+      - name: Bundle ordering OpenAPI
+        run: task bundle --force
+
+      - name: Check bundled file is up to date
+        run: git diff --exit-code -- definitions/openapi/

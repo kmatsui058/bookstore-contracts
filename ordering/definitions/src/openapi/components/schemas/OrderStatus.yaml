@@ -1,0 +1,2 @@
+# 値の正本はドメインモデル（docs/domain）。生成した JSON Schema を取り込む（手で値を書かない）
+$ref: '../../../../../../docs/domain/bookstore/ordering/generated/jsonschema/OrderStatus.json'

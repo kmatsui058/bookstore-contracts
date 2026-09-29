@@ -1,0 +1,48 @@
+// コンテキストマップ：業務ドメインと境界付けられたコンテキスト
+// 書き方は docs/guides/domain-modeling.md に従う。コンテキストの一覧は context-map/contexts.md にある
+model {
+
+  bks = enterprise '書店の業務' {
+    summary 'BookstoreBusiness'
+
+    bkst = domain '書店' {
+      description '''
+        書籍をオンラインで売る業務の領域。
+
+        ## Bounded Context
+
+        - [商品カタログ](#/view/bkst_ctlg/): 売る書籍とその価格を決める
+        - [注文](#/view/bkst_ordr/): 顧客からの注文を受け、確定し、出荷されるまでを扱う
+        - [請求](#/view/bkst_bill/): 確定した注文の代金を顧客に請求する
+      '''
+      summary 'Bookstore'
+
+      ctlg = context '商品カタログ' {
+        description '''
+          売る書籍と、その価格を決めるコンテキスト。注文は、ここで決めた書籍と価格をもとに受け付ける。
+
+          - モジュール: [書籍](#/view/bkst_ctlg_bkm/)
+        '''
+        summary 'Catalog'
+      }
+      ordr = context '注文' {
+        description '''
+          顧客からの注文を受け付け、確定し、出荷されるまでを扱うコンテキスト。
+
+          - [イベントフロー図](#/view/bkst_ordr_event/)
+          - [ステートマシン図](#/view/bkst_ordr_ordm_ord_state/)
+          - モジュール: [注文](#/view/bkst_ordr_ordm/)・[共通語彙](#/view/bkst_ordr_shr/)
+        '''
+        summary 'Ordering'
+      }
+      bill = context '請求' {
+        description '''
+          確定した注文の代金を顧客に請求するコンテキスト。決済は外部の決済代行に任せる。
+
+          - モジュール: [請求](#/view/bkst_bill_invm/)
+        '''
+        summary 'Billing'
+      }
+    }
+  }
+}
