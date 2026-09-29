@@ -1,0 +1,9 @@
+extends:
+  - spectral:oas
+
+rules:
+  # 連絡先は公開する API ではないので書かない
+  info-contact: off
+  # 分割した定義はファイルのパスで $ref するため、components の定義が使われていないと誤検知される。
+  # components に並べているのは、まとめたファイル（bundle）でのスキーマ名を固定するため
+  oas3-unused-component: off
